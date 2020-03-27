@@ -1,0 +1,6 @@
+2. Adding with loop took 454.779 milli-seconds
+3. Adding without loop took 8.485 milli-seoncds
+11. (750,1500,3)
+16. RGB: (0.28068307,0.48053107,0.58688575)
+17. Length: 311 characters
+19. i: 5, of: 5, the: 5, but: 2, have: 2

@@ -288,7 +288,7 @@ class AlexNetDilation(nn.Module):
 
 
 def visualize_kernels(kernel_name,
-                      kernel_weight,
+                      kernel_weight,                      
                       max_in_channels=12,
                       max_out_channels=12,
                       saving_prefix='kernel'):
@@ -336,8 +336,16 @@ def visualize_kernels(kernel_name,
 
 
 def analyze_model_kernels():
-  raise NotImplementedError
-
+  chkpoint = torch.load(FLAGS.model_checkpoint) 
+  """
+  chkpoint is an ordered dict where each feature layer is titled 'features.n.weight' 
+  """
+  # print(chkpoint.keys())
+  for n in [0,3,6,8,10]:
+    curr_layer = 'features.' + str(n) + '.weight' 
+    layer_name = 'Conv2d-' + str(n)
+    visualize_kernels(layer_name,chkpoint[curr_layer])
+  
 
 def model_training():
   train_dataset = pacs_dataset(root_dir='pacs_dataset',
@@ -372,11 +380,11 @@ def model_training():
 
   ############################################################################
   """After implementing all required models, you can switch from here."""
-  # model = AlexNet(configs).to(device)
+  model = AlexNet(configs).to(device)
   # model = AlexNetLargeKernel(configs).to(device)
   # model = AlexNetTiny(configs).to(device)
   # model = AlexNetAvgPooling(configs).to(device)
-  model = AlexNetDilation(configs).to(device)
+  # model = AlexNetDilation(configs).to(device)
   ############################################################################
 
   print('Model Architecture:\n%s' % model)

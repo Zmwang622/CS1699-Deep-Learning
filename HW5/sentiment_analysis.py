@@ -202,7 +202,7 @@ def imdb_trainer():
             best_model = copy.deepcopy(model.state_dict())
             torch.save(best_model, os.path.join(experiment_name,
                                                 'best_model.pt'))
-
+  
   except KeyboardInterrupt:
     pass
 

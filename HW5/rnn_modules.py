@@ -63,9 +63,9 @@ class GRUCell(nn.Module):
         self.input_size, self.hidden_size, self.bias is not True)
 
   def count_parameters(self):
-    print('Total Parameters: %d' %
-          sum(p.numel() for p in self.parameters() if p.requires_grad))
-    return
+    x = sum(p.numel() for p in self.parameters() if p.requires_grad)
+    print('Total Parameters: %d' % x)
+    return x
 
 
 class LSTMCell(nn.Module):
@@ -130,9 +130,9 @@ class LSTMCell(nn.Module):
         self.input_size, self.hidden_size, self.bias is not True)
 
   def count_parameters(self):
-    print('Total Parameters: %d' %
-          sum(p.numel() for p in self.parameters() if p.requires_grad))
-    return
+    x = sum(p.numel() for p in self.parameters() if p.requires_grad)
+    print('Total Parameters: %d' % x)
+    return x
 
 
 class PeepholedLSTMCell(nn.Module):
@@ -142,8 +142,7 @@ class PeepholedLSTMCell(nn.Module):
     self.input_size = input_size
     self.hidden_size = hidden_size
     self.bias = bias
-
-    self.W_f = nn.Parameter(torch.Tensor(hidden_size, hidden_size + input_size))
+    self.W_f = nn.Parameter(torch.Tensor(hidden_size, hidden_size + input_size + 100))
     if bias:
       self.b_f = nn.Parameter(torch.Tensor(hidden_size))
     else:
@@ -175,8 +174,8 @@ class PeepholedLSTMCell(nn.Module):
       prev_h, prev_c = (torch.zeros((batch, self.hidden_size), device = x.device), torch.zeros((batch, self.hidden_size), device = x.device))
     else:
       prev_h, prev_c = prev_state
-
-    concat_prevchx = torch.cat((prev_c,prev_h, x), dim = 1)
+    old = torch.cat((prev_h,x) , dim = 1)
+    concat_prevchx = torch.cat((prev_c, prev_h, x), dim = 1)
     f = torch.sigmoid(F.linear(concat_prevchx, self.W_f, self.b_f))
     i = torch.sigmoid(F.linear(concat_prevchx, self.W_i, self.b_i))
     c_tilde = torch.tanh(F.linear(concat_prevchx, self.W_c, self.b_c))
@@ -198,9 +197,9 @@ class PeepholedLSTMCell(nn.Module):
         self.input_size, self.hidden_size, self.bias is not True)
 
   def count_parameters(self):
-    print('Total Parameters: %d' %
-          sum(p.numel() for p in self.parameters() if p.requires_grad))
-    return
+    x = sum(p.numel() for p in self.parameters() if p.requires_grad)
+    print('Total Parameters: %d' % x)
+    return x
 
 
 class CoupledLSTMCell(nn.Module):
@@ -265,6 +264,6 @@ class CoupledLSTMCell(nn.Module):
         self.input_size, self.hidden_size, self.bias is not True)
 
   def count_parameters(self):
-    print('Total Parameters: %d' %
-          sum(p.numel() for p in self.parameters() if p.requires_grad))
-    return
+    x = sum(p.numel() for p in self.parameters() if p.requires_grad)
+    print('Total Parameters: %d' % x)
+    return x

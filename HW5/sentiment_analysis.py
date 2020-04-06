@@ -13,6 +13,10 @@ from tqdm import tqdm
 from datasets import IMDBReviewDataset, imdb_collate_fn
 from rnn_modules import CoupledLSTMCell, GRUCell, LSTMCell, PeepholedLSTMCell
 
+import matplotlib.pyplot as plt; plt.rcdefaults()
+import numpy as np
+import matplotlib.pyplot as plt
+
 FLAGS = flags.FLAGS
 
 flags.DEFINE_float('learning_rate', 1e-3, 'Learning rate.')
@@ -202,16 +206,33 @@ def imdb_trainer():
             best_model = copy.deepcopy(model.state_dict())
             torch.save(best_model, os.path.join(experiment_name,
                                                 'best_model.pt'))
-  
+
   except KeyboardInterrupt:
     pass
 
   return
 
+def visualize_count():
+  objects = ('GRU','LSTM','Peephole','Coupled')
+  y_pos = np.arange(len(objects))
+  mod1 = GRUCell(input_size=FLAGS.embedding_dim, hidden_size=FLAGS.hidden_size, bias=False)
+  mod2 = LSTMCell(input_size=FLAGS.embedding_dim, hidden_size=FLAGS.hidden_size, bias=False)
+  mod3 = PeepholedLSTMCell(input_size=FLAGS.embedding_dim, hidden_size=FLAGS.hidden_size, bias=False)  
+  mod4 = CoupledLSTMCell(input_size=FLAGS.embedding_dim, hidden_size=FLAGS.hidden_size, bias=False)
+  num_param = [mod1.count_parameters(), mod2.count_parameters(), mod3.count_parameters(), mod4.count_parameters()]
+  print(num_param)
+  plt.bar(y_pos, num_param, align = 'center', alpha=0.5)
+  plt.xticks(y_pos,objects)
+  plt.ylabel('Num Params')
+  plt.title('Parameter Comparisons for LSTM variants')
+
+  plt.show()
+  plt.savefig('comparison.png',bbox_inches='tight')
+  plt.close()
 
 def main(unused_argvs):
   imdb_trainer()
-
+  # visualize_count()
 
 if __name__ == '__main__':
   app.run(main)

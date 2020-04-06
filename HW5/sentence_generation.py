@@ -2,6 +2,7 @@ import collections
 import copy
 import os
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -64,11 +65,13 @@ class SentenceGeneration(nn.Module):
     self.hidden_size = hidden_size
     self.bias = bias
 
-    #####################################################################
-    # Implement here following the given signature                      #
-    raise NotImplementedError
-    #####################################################################
-
+    self.embedding = nn.Embedding(num_embeddings=vocabulary_size,
+                                  embedding_dim=embedding_dim,
+                                  padding_idx=PADDING_TOKEN)
+    self.rnn_model = self.rnn_module(input_size=embedding_dim,
+                                     hidden_size=hidden_size,
+                                     bias=bias)
+    self.classifier = nn.Linear(hidden_size, 26)
     return
 
   def forward(self, history, state=None):
@@ -90,12 +93,35 @@ class SentenceGeneration(nn.Module):
       logits: Predicted logits (before softmax) over vocabulary.
       state: Current state, useful for continuous inference.
     """
+    # if state == None:
+    #   prev_state = torch.from_numpy(np.zeros(self.vocabulary_size)) # state = len(vocab) of 0s
+    # else:
+    #   prev_state = state
     #####################################################################
     # Implement here following the given signature                      #
-    raise NotImplementedError
-    # Placeholder, you need to override these two variables.
-    logits, state = None, None
+    # Placeholder, you need to override these two variables
+    logits = None
     #####################################################################
+    if state == None:
+      state = torch.Tensor(self.vocabulary_size).fill(0)
+
+    batch_length = len(history)  
+    data = self.embedding(history)
+
+    batch_size, total_steps, _ = data.shape
+    full_outputs = []
+    for x in history:
+      for step in range(total_steps):
+        next_state = self.rnn_model(data[:, step, :], state)
+        if isinstance(next_state, tuple):
+          h, c = next_state
+          full_outputs.append(h)
+        else:
+          full_outputs.append(next_state)
+        state = next_state
+
+    full_outputs = torch.stack(full_outputs, dim=1)
+    outputs = full_outputs[torch.arange(batch)]
     return logits, state
 
   def reset_parameters(self):

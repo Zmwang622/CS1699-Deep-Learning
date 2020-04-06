@@ -148,19 +148,19 @@ class PeepholedLSTMCell(nn.Module):
     else:
       self.register_parameter('b_f', None)
 
-    self.W_i = nn.Parameter(torch.Tensor(hidden_size, hidden_size + input_size))
+    self.W_i = nn.Parameter(torch.Tensor(hidden_size, hidden_size + input_size + 100))
     if bias:
       self.b_i = nn.Parameter(torch.Tensor(hidden_size))
     else:
       self.register_parameter('b_i', None)  
 
-    self.W_c = nn.Parameter(torch.Tensor(hidden_size, hidden_size + input_size))
+    self.W_c = nn.Parameter(torch.Tensor(hidden_size, hidden_size + input_size + 100))
     if bias:
       self.b_c = nn.Parameter(torch.Tensor(hidden_size))
     else:
       self.register_parameter('b_c', None)
 
-    self.W_o = nn.Parameter(torch.Tensor(hidden_size, hidden_size + input_size))
+    self.W_o = nn.Parameter(torch.Tensor(hidden_size, hidden_size + input_size + 100))
     if bias:
       self.b_o = nn.Parameter(torch.Tensor(hidden_size))
     else:

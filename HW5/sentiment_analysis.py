@@ -77,7 +77,6 @@ class SentimentClassification(nn.Module):
 
   def forward(self, batch_reviews, batch_lengths):
     data = self.embedding(batch_reviews)
-
     state = None
     batch_size, total_steps, _ = data.shape
     full_outputs = []
@@ -92,6 +91,9 @@ class SentimentClassification(nn.Module):
 
     full_outputs = torch.stack(full_outputs, dim=1)
     outputs = full_outputs[torch.arange(batch_size), batch_lengths - 1, :]
+    # print("\n",outputs)
+    # print(outputs.shape)
+    # raise NotImplementedError
     logits = self.classifier(outputs)
     return logits
 

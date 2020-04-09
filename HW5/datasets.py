@@ -121,6 +121,9 @@ class ShakespeareDataset(Dataset):
     history, label = self.data[index]
     history = np.array([self.char2index[x] for x in history])
     label = self.char2index[label]
+    # print("label: ", label)
+    # print("history: ", history)
+    # raise NotImplementedError
     return history, label
 
   def get_vocabulary(self):

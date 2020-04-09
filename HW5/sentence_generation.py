@@ -64,14 +64,14 @@ class SentenceGeneration(nn.Module):
     self.embedding_dim = embedding_dim
     self.hidden_size = hidden_size
     self.bias = bias
-
+    print("Vocab size: ", vocabulary_size)
     self.embedding = nn.Embedding(num_embeddings=vocabulary_size,
                                   embedding_dim=embedding_dim,
                                   padding_idx=PADDING_TOKEN)
     self.rnn_model = self.rnn_module(input_size=embedding_dim,
                                      hidden_size=hidden_size,
                                      bias=bias)
-    self.classifier = nn.Linear(hidden_size, 26)
+    self.classifier = nn.Linear(hidden_size, self.vocabulary_size)
     return
 
   def forward(self, history, state=None):
@@ -93,35 +93,75 @@ class SentenceGeneration(nn.Module):
       logits: Predicted logits (before softmax) over vocabulary.
       state: Current state, useful for continuous inference.
     """
-    # if state == None:
-    #   prev_state = torch.from_numpy(np.zeros(self.vocabulary_size)) # state = len(vocab) of 0s
-    # else:
-    #   prev_state = state
     #####################################################################
     # Implement here following the given signature                      #
     # Placeholder, you need to override these two variables
     logits = None
+    state = None
     #####################################################################
+    """
     if state == None:
-      state = torch.Tensor(self.vocabulary_size).fill(0)
+      prev_state = torch.zeros((self.vocabulary_size,1))
+    else:
+      prev_state = state
 
-    batch_length = len(history)  
     data = self.embedding(history)
 
     batch_size, total_steps, _ = data.shape
     full_outputs = []
     for x in history:
-      for step in range(total_steps):
-        next_state = self.rnn_model(data[:, step, :], state)
-        if isinstance(next_state, tuple):
-          h, c = next_state
-          full_outputs.append(h)
-        else:
-          full_outputs.append(next_state)
-        state = next_state
+
+    for step in range(total_steps):
+      next_state = self.rnn_model(data[:, step,:], prev_state)
+      if isinstance(next_state, tuple):
+        h, c = next_state
+        full_outputs.append(h)
+      else:
+        full_outputs.append(next_state)
+      prev_state = next_state    
 
     full_outputs = torch.stack(full_outputs, dim=1)
-    outputs = full_outputs[torch.arange(batch)]
+    outputs = full_outputs[torch.arange(batch_size), batch_lengths-1, :]
+    logits = self.classifier(outputs)
+    """
+    
+    # print("\nHistory shape: ",history.shape)
+    # data = self.embedding(history)
+    # print(data)
+    if state == None:
+      prev_state = torch.zeros((self.vocabulary_size,self.hidden_size)).t().to(torch.device('cuda:0'))
+    else:
+      prev_state = state
+
+    full_outputs = []
+    data = self.embedding(history)
+    batch_size, total_steps, _ = data.shape
+     
+    for step in range(total_steps):
+      next_state = self.rnn_model(data[:,step,:], state)
+      if isinstance(next_state, tuple):
+        h , c = next_state
+        full_outputs.append(h)
+      else:
+        full_outputs.append(next_state)
+      state = next_state
+
+    full_outputs = torch.stack(full_outputs, dim=1)
+    outputs = full_outputs[torch.arange(batch_size),1,:]
+    logits = self.classifier(outputs)
+    # for step in range(data.shape[1]):
+    #   print(data[:, step, :].shape)
+
+    # for x in history:
+    #   data = self.embedding(x)
+
+    #   print("\ndata shape: ",data.shape)
+    #   print("x shape (prior to embedding): ", x.shape)
+    #   print("state shape: ",prev_state.shape)
+    #   for y in data:
+    #     next_state = self.rnn_model(prev_state, y)
+    #     full_outputs.append(next_state)
+    
     return logits, state
 
   def reset_parameters(self):

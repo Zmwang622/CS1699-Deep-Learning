@@ -42,7 +42,6 @@ class GRUCell(nn.Module):
       prev_h = torch.zeros((batch, self.hidden_size), device=x.device)
     else:
       prev_h = prev_state
-
     concat_hx = torch.cat((prev_h, x), dim=1)
     z = torch.sigmoid(F.linear(concat_hx, self.W_z, self.b_z))
     r = torch.sigmoid(F.linear(concat_hx, self.W_r, self.b_r))

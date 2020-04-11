@@ -147,7 +147,7 @@ class SentenceGeneration(nn.Module):
       state = next_state
 
     full_outputs = torch.stack(full_outputs, dim=1) 
-    outputs = full_outputs[torch.arange(batch_size),99,:]
+    outputs = full_outputs[torch.arange(batch_size),self.history_length - 1,:]
     print("\nOutputs Shape: ", outputs.shape)
     print(outputs[0])
     raise NotImplementedError

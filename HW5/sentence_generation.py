@@ -99,35 +99,6 @@ class SentenceGeneration(nn.Module):
     logits = None
     state = None
     #####################################################################
-    """
-    if state == None:
-      prev_state = torch.zeros((self.vocabulary_size,1))
-    else:
-      prev_state = state
-
-    data = self.embedding(history)
-
-    batch_size, total_steps, _ = data.shape
-    full_outputs = []
-    for x in history:
-
-    for step in range(total_steps):
-      next_state = self.rnn_model(data[:, step,:], prev_state)
-      if isinstance(next_state, tuple):
-        h, c = next_state
-        full_outputs.append(h)
-      else:
-        full_outputs.append(next_state)
-      prev_state = next_state    
-
-    full_outputs = torch.stack(full_outputs, dim=1)
-    outputs = full_outputs[torch.arange(batch_size), batch_lengths-1, :]
-    logits = self.classifier(outputs)
-    """
-    
-    # print("\nHistory shape: ",history.shape)
-    # data = self.embedding(history)
-    # print(data)
     if state == None:
       prev_state = torch.zeros((self.vocabulary_size,self.hidden_size)).t().to(torch.device('cuda:0'))
     else:
@@ -147,10 +118,7 @@ class SentenceGeneration(nn.Module):
       state = next_state
 
     full_outputs = torch.stack(full_outputs, dim=1) 
-    outputs = full_outputs[torch.arange(batch_size),self.history_length - 1,:]
-    print("\nOutputs Shape: ", outputs.shape)
-    print(outputs[0])
-    raise NotImplementedError
+    outputs = full_outputs[torch.arange(batch_size),FLAGS.history_length - 1,:]
     logits = self.classifier(outputs)
 
     
@@ -271,14 +239,20 @@ def shakespeare_writer():
   model.eval()
 
   generated_chars = []
+  state = None
   #####################################################################
   # Implement here for generating new sentence                        #
   # Specifically, you need to iterate through the history and predict #
   # next character; then you could take the predicted history as part #
   # of history then repeat the process. The generation should be      #
   # repeated for FLAGS.generation_length times.
-  raise NotImplementedError
   #####################################################################
+  for _ in range(FLAGS.generation_length):
+    logits , new_state = model.forward(inputs,state)
+    new_char_id = sample_next_char_id(logits)
+    inputs.append(new_char_id)
+    generated_chars.append(index2char[new_char_id])
+    state = new_state
 
   return start_string + ''.join(generated_chars)
 
@@ -287,8 +261,12 @@ def main(unused_argvs):
   if FLAGS.task_type == 'training':
     shakespeare_trainer()
   elif FLAGS.task_type == 'generation':
-    shakespeare_writer()
-
+    x = shakespeare_writer()
+    print("\n Generated Text: ")
+    print(x)
+    f = open("generated_sentences", "w")
+    f.write(x)
+    f.close()
 
 if __name__ == '__main__':
   app.run(main)

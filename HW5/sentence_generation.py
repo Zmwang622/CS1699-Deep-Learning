@@ -146,21 +146,13 @@ class SentenceGeneration(nn.Module):
         full_outputs.append(next_state)
       state = next_state
 
-    full_outputs = torch.stack(full_outputs, dim=1)
-    outputs = full_outputs[torch.arange(batch_size),1,:]
+    full_outputs = torch.stack(full_outputs, dim=1) 
+    outputs = full_outputs[torch.arange(batch_size),99,:]
+    print("\nOutputs Shape: ", outputs.shape)
+    print(outputs[0])
+    raise NotImplementedError
     logits = self.classifier(outputs)
-    # for step in range(data.shape[1]):
-    #   print(data[:, step, :].shape)
 
-    # for x in history:
-    #   data = self.embedding(x)
-
-    #   print("\ndata shape: ",data.shape)
-    #   print("x shape (prior to embedding): ", x.shape)
-    #   print("state shape: ",prev_state.shape)
-    #   for y in data:
-    #     next_state = self.rnn_model(prev_state, y)
-    #     full_outputs.append(next_state)
     
     return logits, state
 

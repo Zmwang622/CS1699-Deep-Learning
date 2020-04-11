@@ -90,10 +90,9 @@ class SentimentClassification(nn.Module):
       state = next_state
 
     full_outputs = torch.stack(full_outputs, dim=1)
+    print(batch_lengths)
+    raise NotImplementedError
     outputs = full_outputs[torch.arange(batch_size), batch_lengths - 1, :]
-    # print("\n",outputs)
-    # print(outputs.shape)
-    # raise NotImplementedError
     logits = self.classifier(outputs)
     return logits
 

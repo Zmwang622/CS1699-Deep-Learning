@@ -100,7 +100,7 @@ class SentenceGeneration(nn.Module):
     state = None
     #####################################################################
     if state == None:
-      prev_state = torch.zeros((self.vocabulary_size,self.hidden_size)).t().to(torch.device('cuda:0'))
+      prev_state = torch.zeros((self.vocabulary_size,self.hidden_size), device = history.device)
     else:
       prev_state = state
 
@@ -118,7 +118,7 @@ class SentenceGeneration(nn.Module):
       state = next_state
 
     full_outputs = torch.stack(full_outputs, dim=1) 
-    outputs = full_outputs[torch.arange(batch_size),FLAGS.history_length - 1,:]
+    outputs = full_outputs[torch.arange(batch_size), history.shape[1]- 1,:]
     logits = self.classifier(outputs)
 
     
@@ -248,11 +248,10 @@ def shakespeare_writer():
   # repeated for FLAGS.generation_length times.
   #####################################################################
   for _ in range(FLAGS.generation_length):
-    logits , new_state = model.forward(inputs,state)
+    logits , state = model.forward(inputs,state)
     new_char_id = sample_next_char_id(logits)
-    inputs.append(new_char_id)
-    generated_chars.append(index2char[new_char_id])
-    state = new_state
+    inputs = torch.cat((inputs, new_char_id.view(1,1)),dim = 1)
+    generated_chars.append(index2char[new_char_id.item()])
 
   return start_string + ''.join(generated_chars)
 

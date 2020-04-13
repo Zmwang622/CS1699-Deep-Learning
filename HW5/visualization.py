@@ -10,6 +10,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from absl import app
 from torch.utils.data import DataLoader, Dataset
+from tqdm import tqdm
+
 
 PADDING_TOKEN = 0
 CKPT_VOCABULARY_SIZE = 82
@@ -160,21 +162,99 @@ def visualize_internals(sequence_id,
   plt.savefig(
       os.path.join(saving_dir,
                    'S%02d_' % sequence_id + gate_name.lower() + '.png'))
+  plt.close()
   return
 
 
 def war_and_peace_visualizer():
   #####################################################################
-  # Implement here following the given signature                      #
-  raise NotImplementedError
+  # Implement here following the given signature                      #  
   #####################################################################
+  """
+  I NEED TO READ THE HW COMPLETELY LOL
 
+  EPOCHS = 20
+  train_dataset = VisualizeWarAndPeaceDataset()
+  train_loader = DataLoader(train_dataset, shuffle=True, num_workers=8)
+  
+  device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+
+  model = VisualizeInternalGates()
+
+  model.to(device)
+  print('Model Architecture:\n%s' % model)
+
+  criterion = nn.CrossEntropyLoss(reduction='mean')
+  optimizer = torch.optim.Adam(model.parameters,
+                                lr=LEARNING_RATE,
+                                weight_decay=WEIGHT_DECAY)
+  internals = None
+  for epoch in range(EPOCHS):
+    model.train()
+    dataset = train_dataset
+    data_loader = train_loader
+
+    progress_bar = tqdm(enumerate(data_loader))
+    for step, (sequences, labels) in progress_bar:
+      total_step = epoch * len(data_loader) + step
+      sequences = sequences.to(device)
+      labels = labels.to(device)
+
+      optimizer.zero_grad()
+
+      outputs, internals = model(sequences)
+      _, preds = torch.max(outputs, 1)
+      loss = criterion(outputs, labels)
+      corrects = torch.sum(preds == labels.data)
+
+      loss.backward()
+      optimizer.step()
+      progress_bar.set_description(
+            'Loss: %.4f, Accuracy: %.4f' %
+            (loss.item(), corrects.item() / len(labels)))
+  print("\n")
+  print(internals['update_signals'])
+  print(type(internals['update_signals']))
+  print(train_dataset.convert_to_chars(internals['update_signals']))
+  for gate_name in ['update_signals', 'reset_signals','cell_state_candidates']:
+    continue
+  """
+  LEARNING_RATE = 1e-3
+  WEIGHT_DECAY = 0
+  device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+  device = torch.device('cpu')
+  state_dict = torch.load("data/war_and_peace_model_checkpoint.pt")
+  vocabulary = state_dict['vocabulary']
+  # print(state_dict.keys())
+
+  model = VisualizeInternalGates()
+  model.load_state_dict(state_dict['model'])
+  model.to(device)
+  print('Model Architecture:\n%s' % model)
+
+  train_dataset = VisualizeWarAndPeaceDataset(vocabulary)
+  train_loader = DataLoader(train_dataset, shuffle = True, num_workers = 8)
+
+  criterion = nn.CrossEntropyLoss(reduction='mean')
+  optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
+  internals = None
+  for step, (sequences, labels) in tqdm(enumerate(train_loader)):
+    total_step = 1 * len(train_loader) + step
+    sequences = sequences.to(device)
+    labels = labels.to(device)
+
+    outputs, internals = model(sequences)
+    for index,gate_name in enumerate(['update_signals', 'reset_signals','cell_state_candidates']):
+      visualize_internals(step, train_dataset.convert_to_chars(sequences), gate_name, internals[gate_name])
+
+  # for index,gate_name in enumerate(['update_signals', 'reset_signals','cell_state_candidates']):
+  #   # visualize_internals(index, ,gate_name,)
+  #   continue
   return
 
 
 def main(unused_argvs):
   war_and_peace_visualizer()
-
 
 if __name__ == '__main__':
   app.run(main)

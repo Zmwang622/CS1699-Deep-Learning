@@ -252,7 +252,7 @@ def shakespeare_writer():
     new_char_id = sample_next_char_id(logits)
     inputs = torch.cat((inputs, new_char_id.view(1,1)),dim = 1)
     generated_chars.append(index2char[new_char_id.item()])
-
+    
   return start_string + ''.join(generated_chars)
 
 
@@ -263,7 +263,7 @@ def main(unused_argvs):
     x = shakespeare_writer()
     print("\n Generated Text: ")
     print(x)
-    f = open("generated_sentences", "w")
+    f = open("generated_sentences.txt", "w")
     f.write(x)
     f.close()
 

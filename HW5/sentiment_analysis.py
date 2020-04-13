@@ -232,8 +232,8 @@ def visualize_count():
   plt.close()
 
 def main(unused_argvs):
-  imdb_trainer()
-  # visualize_count()
+  # imdb_trainer()
+  visualize_count()
 
 if __name__ == '__main__':
   app.run(main)

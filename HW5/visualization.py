@@ -30,7 +30,7 @@ class VisualizeInternalGates(nn.Module):
     self.embedding = nn.Embedding(num_embeddings=vocabulary_size,
                                   embedding_dim=embedding_dim,
                                   padding_idx=PADDING_TOKEN)
-    self.rnn_model = VisualizeGRUCell(input_size=embedding_dim,
+    self.rnn_model = VisualizePeepholedLSTMCell(input_size=embedding_dim,
                                       hidden_size=hidden_size)
     self.classifier = nn.Linear(hidden_size, vocabulary_size)
     return
@@ -42,11 +42,12 @@ class VisualizeInternalGates(nn.Module):
     batch_size, total_steps, _ = data.shape
     internals = []
     for step in range(total_steps):
-      next_h, gate_signals = self.rnn_model(data[:, step, :], state)
+      next_h, next_c, gate_signals = self.rnn_model(data[:, step, :], state)
       internals.append(gate_signals)
-      state = next_h
+      # new_state = torch.cat((next_h,next_c), dim=0)
+      state = (next_h, next_c)
 
-    logits = self.classifier(state)
+    logits = self.classifier(state[0])
 
     internals = list(zip(*internals))
     outputs = {
@@ -96,6 +97,130 @@ class VisualizeGRUCell(nn.Module):
     return 'input_size={}, hidden_size={}'.format(self.input_size,
                                                   self.hidden_size)
 
+class VisualizeLSTMCell(nn.Module):
+
+  def __init__(self, input_size, hidden_size):
+    super().__init__()
+
+    self.input_size = input_size
+    self.hidden_size = hidden_size
+
+    self.W_f = nn.Parameter(torch.Tensor(hidden_size, hidden_size + input_size))
+    self.W_i = nn.Parameter(torch.Tensor(hidden_size, hidden_size + input_size))
+    self.W_c = nn.Parameter(torch.Tensor(hidden_size, hidden_size + input_size))
+    self.W_o = nn.Parameter(torch.Tensor(hidden_size, hidden_size + input_size))
+    
+    self.reset_parameters()
+
+  def forward(self, x, prev_state):
+    if prev_state is None:
+      batch = x.shape[0]
+      prev_h, prev_c = torch.zeros((batch, self.hidden_size), device=x.device), torch.zeros((batch, self.hidden_size), device = x.device)
+    else:
+      prev_h, prev_c = prev_state
+
+    concat_hx = torch.cat((prev_h, x), dim=1)
+    f = torch.sigmoid(F.linear(concat_hx, self.W_f))
+    i = torch.sigmoid(F.linear(concat_hx, self.W_i))
+    c_tilde = torch.tanh(F.linear(concat_hx, self.W_c))
+    next_c = f * prev_c + i * c_tilde
+    o = torch.sigmoid(F.linear(concat_hx, self.W_o))
+    next_h = o * torch.tanh(next_c)
+    return next_h, next_c, (f, i, c_tilde, o)
+
+  def reset_parameters(self):
+    sqrt_k = (1. / self.hidden_size)**0.5
+    with torch.no_grad():
+      for param in self.parameters():
+        param.uniform_(-sqrt_k, sqrt_k)
+    return
+
+  def extra_repr(self):
+    return 'input_size={}, hidden_size={}'.format(self.input_size,
+                                                  self.hidden_size)
+
+class VisualizePeepholedLSTMCell(nn.Module):
+
+  def __init__(self, input_size, hidden_size):
+    super().__init__()
+
+    self.input_size = input_size
+    self.hidden_size = hidden_size
+
+    self.W_f = nn.Parameter(torch.Tensor(hidden_size, hidden_size + input_size + CKPT_HIDDEN_SIZE))
+    self.W_i = nn.Parameter(torch.Tensor(hidden_size, hidden_size + input_size + CKPT_HIDDEN_SIZE))
+    self.W_c = nn.Parameter(torch.Tensor(hidden_size, hidden_size + input_size + CKPT_HIDDEN_SIZE))
+    self.W_o = nn.Parameter(torch.Tensor(hidden_size, hidden_size + input_size + CKPT_HIDDEN_SIZE))
+    
+    self.reset_parameters()
+
+  def forward(self, x, prev_state):
+    if prev_state is None:
+      batch = x.shape[0]
+      prev_h, prev_c = torch.zeros((batch, self.hidden_size), device=x.device), torch.zeros((batch, self.hidden_size), device = x.device)
+    else:
+      prev_h, prev_c = prev_state
+
+    concat_prevchx = torch.cat((prev_c, prev_h, x), dim=1)
+    f = torch.sigmoid(F.linear(concat_prevchx, self.W_f))
+    i = torch.sigmoid(F.linear(concat_prevchx, self.W_i))
+    c_tilde = torch.tanh(F.linear(concat_prevchx, self.W_c))
+    next_c = f * prev_c + i * c_tilde
+    concat_chx = torch.cat((next_c,prev_h, x), dim = 1)
+    o = torch.sigmoid(F.linear(concat_chx, self.W_o))
+    next_h = o * torch.tanh(next_c)
+    return next_h, next_c, (f, i, c_tilde, o)
+
+  def reset_parameters(self):
+    sqrt_k = (1. / self.hidden_size)**0.5
+    with torch.no_grad():
+      for param in self.parameters():
+        param.uniform_(-sqrt_k, sqrt_k)
+    return
+
+  def extra_repr(self):
+    return 'input_size={}, hidden_size={}'.format(self.input_size,
+                                                  self.hidden_size)
+
+class VisualizeCoupledLSTMCell(nn.Module):
+
+  def __init__(self, input_size, hidden_size):
+    super().__init__()
+
+    self.input_size = input_size
+    self.hidden_size = hidden_size
+
+    self.W_f = nn.Parameter(torch.Tensor(hidden_size, hidden_size + input_size))
+    self.W_c = nn.Parameter(torch.Tensor(hidden_size, hidden_size + input_size))
+    self.W_o = nn.Parameter(torch.Tensor(hidden_size, hidden_size + input_size))
+    
+    self.reset_parameters()
+
+  def forward(self, x, prev_state):
+    if prev_state is None:
+      batch = x.shape[0]
+      prev_h, prev_c = torch.zeros((batch, self.hidden_size), device=x.device), torch.zeros((batch, self.hidden_size), device = x.device)
+    else:
+      prev_h, prev_c = prev_state
+
+    concat_hx = torch.cat((prev_h, x), dim=1)
+    f = torch.sigmoid(F.linear(concat_hx, self.W_f))
+    c_tilde = torch.tanh(F.linear(concat_hx, self.W_c))
+    next_c = f * prev_c + (1 - f) * c_tilde
+    o = torch.sigmoid(F.linear(concat_hx, self.W_o))
+    next_h = o * torch.tanh(next_c)
+    return next_h, next_c, (f, c_tilde, o)
+
+  def reset_parameters(self):
+    sqrt_k = (1. / self.hidden_size)**0.5
+    with torch.no_grad():
+      for param in self.parameters():
+        param.uniform_(-sqrt_k, sqrt_k)
+    return
+
+  def extra_repr(self):
+    return 'input_size={}, hidden_size={}'.format(self.input_size,
+                                                  self.hidden_size)
 
 class VisualizeWarAndPeaceDataset(Dataset):
 
@@ -228,7 +353,7 @@ def war_and_peace_visualizer():
   # print(state_dict.keys())
 
   model = VisualizeInternalGates()
-  model.load_state_dict(state_dict['model'])
+  # model.load_state_dict(state_dict['model'])
   model.to(device)
   print('Model Architecture:\n%s' % model)
 
@@ -247,9 +372,6 @@ def war_and_peace_visualizer():
     for index,gate_name in enumerate(['update_signals', 'reset_signals','cell_state_candidates']):
       visualize_internals(step, train_dataset.convert_to_chars(sequences), gate_name, internals[gate_name])
 
-  # for index,gate_name in enumerate(['update_signals', 'reset_signals','cell_state_candidates']):
-  #   # visualize_internals(index, ,gate_name,)
-  #   continue
   return
 
 

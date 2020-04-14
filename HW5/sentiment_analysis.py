@@ -88,10 +88,8 @@ class SentimentClassification(nn.Module):
       else:
         full_outputs.append(next_state)
       state = next_state
-
+    # print(type(state))
     full_outputs = torch.stack(full_outputs, dim=1)
-    print(batch_lengths)
-    raise NotImplementedError
     outputs = full_outputs[torch.arange(batch_size), batch_lengths - 1, :]
     logits = self.classifier(outputs)
     return logits
@@ -232,8 +230,8 @@ def visualize_count():
   plt.close()
 
 def main(unused_argvs):
-  # imdb_trainer()
-  visualize_count()
+  imdb_trainer()
+  # visualize_count()
 
 if __name__ == '__main__':
   app.run(main)

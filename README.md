@@ -3,20 +3,24 @@ Course description: This course will cover the basics of modern deep neural netw
 
 Prerequisites: Math 220 (Calculus I), Math 280 or 1180 (Linear Algebra), CS 1501 (Algorithm Implementation)
 
-Piazza: Sign up for it here. Please use Piazza rather than email so everyone can benefit from the discussion-- you can post in such a way that only the instructor sees your name. Please try to answer each others' questions whenever possible. The best time to ask the instructor or TA questions is during office hours.
-
 Programming language/framework: We will use Python, NumPy/SciPy, and PyTorch.
 
-Textbooks: We will have required readings from the following textbook.
-Ian Goodfellow, Yoshua Bengio, Aaron Courville. Deep Learning. MIT Press, 2016. online version
-There will also be additional readings from published papers. The following textbooks are useful as additional reference:
-Michael Nielsen. Neural Networks and Deep Learning. online version
-Eugene Charniak. Introduction to Deep Learning. MIT Press, 2019. link
-Christopher M. Bishop. Pattern Recognition and Machine Learning. Springer, 2006.
-Kevin P. Murphy. Machine Learning: A Probabilistic Perspective. MIT Press, 2012.
-Trevor Hastie, Robert Tibshirani, and Jerome Friedman. The Elements of Statistical Learning. Springer, 2009. link
-David Barber. Bayesian Reasoning and Machine Learning. Cambridge University Press, 2012. link
-Dan Jurafsky and James H. Martin. Speech and Language Processing. online version
-Richard Szeliski. Computer Vision: Algorithms and Applications. online version
-[top]
-Policies
+
+## HW1
+Various Numpy, Python, MatPlotLib exercises.
+
+## HW2 
+Built a feed-forward network by hand. The network has three layers and utilizes my own back-propagation algorithm. 
+Network was trained on the [Red Wine Quality Dataset] (https://archive.ics.uci.edu/ml/datasets/Wine+Quality). 
+
+## HW3
+Used Pytorch to implement a 3-layer MLP on the CiFar-10 Dataset. Created a custom-fit dataset class for the Cifar data and used Pytorch's pretrained MobileNetV2 models for transfer learning.
+
+## HW4
+Implemented the original AlexNet CNN using PyTorch. Then created 4 varieties that used various pooling, filter, and kernel size strategies. Visualized each implentation's layers with the `visual_kernels` function.
+
+## HW5
+Implemented and compared four variants of a LSTM. Developed a character-based RNN model that predicts Shakespeare character and used the model to generate text. Visualized the LSTM's gates and internals using the `visualization.py` class.
+
+## Project
+Cancelled term project due to COVID-19. Our team aimed to generate music based on various moods.
